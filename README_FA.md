@@ -143,7 +143,7 @@ const EXIT_RELAY_URL = "https://worker-name.subdomain.workers.dev/relay";
 
 خلاصه — روی VPS:
 
-<div dir="ltr">
+<div dir="ltr" align="left">
 
 ```bash
 # بیلد و کپی روی سرور
@@ -200,7 +200,7 @@ ufw allow 8787/tcp
 
 نیاز به Go نسخه ۱.۲۵ به بالا دارد.
 
-<div dir="ltr">
+<div dir="ltr" align="left">
 
 ```bash
 # باینری دسکتاپ

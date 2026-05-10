@@ -83,7 +83,7 @@ APK را از صفحه [Releases](../../../releases) دانلود کن و روی
 
 نیاز به Android Studio با NDK دارد.
 
-<div dir="ltr">
+<div dir="ltr" align="left">
 
 ```bash
 # نصب gomobile (یک بار)
