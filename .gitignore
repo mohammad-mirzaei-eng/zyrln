@@ -9,6 +9,7 @@ certs/
 # Test reports
 reports/
 *.log
+tools/utls-frag-probe/
 
 # Go build outputs
 /dpi

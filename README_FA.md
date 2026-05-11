@@ -81,7 +81,7 @@
 <div dir="ltr">
 
 ```bash
-openssl rand -base64 32
+zyrln -gen-key
 ```
 
 </div>

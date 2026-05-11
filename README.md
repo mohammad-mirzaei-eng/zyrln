@@ -76,7 +76,7 @@ To access Instagram, Twitter, Telegram, and other non-Google sites, you need to 
 Run this once on any computer. Save the output — you'll use it in every step.
 
 ```bash
-openssl rand -base64 32
+zyrln -gen-key
 ```
 
 Example output: `swrkwbMS1X666fjzReip+PbodKcPyDK7Xbk5gRSgRUE=`

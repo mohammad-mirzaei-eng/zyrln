@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -138,8 +140,9 @@ func main() {
 
 Modes:
   (default)          run reachability probes and print a table
+  -gen-key           generate a random auth key and print it
   -init-ca           generate a local CA cert for HTTPS proxy interception
-	-serve-proxy       start local HTTP+HTTPS and SOCKS5 proxies backed by the relay
+  -serve-proxy       start local HTTP+HTTPS and SOCKS5 proxies backed by the relay
   -relay-fetch-url   fetch one URL through the full relay chain
   -export-config     print config as JSON for importing into the Android app
 
@@ -171,6 +174,7 @@ Flags:
 	directEnabledFlag := flag.Bool("direct-enabled", true, "enable direct TLS-fragmentation bypass for Google domains (saved to config.env by GUI)")
 	exportConfigFlag := flag.Bool("export-config", false, "print config as JSON for importing into the Android app")
 	initCAFlag := flag.Bool("init-ca", false, "generate a local CA certificate for HTTPS proxy interception")
+	genKeyFlag := flag.Bool("gen-key", false, "generate a random 32-byte base64 auth key and print it")
 	frontRedirectsFlag := flag.Bool("front-redirects", false, "when a fronted probe gets a redirect, retry the Location using the front domain and encrypted Host override")
 	followRedirectsFlag := flag.Bool("follow-redirects", true, "follow HTTP redirects")
 	guiFlag := flag.Bool("gui", false, "start the browser-based GUI")
@@ -214,6 +218,16 @@ Flags:
 		}
 		out, _ := json.Marshal(map[string]string{"url": rawURL, "key": key})
 		fmt.Println(string(out))
+		return
+	}
+
+	if *genKeyFlag {
+		key := make([]byte, 32)
+		if _, err := rand.Read(key); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to generate key: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(base64.StdEncoding.EncodeToString(key))
 		return
 	}
 
