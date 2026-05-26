@@ -14,21 +14,16 @@ zyrln/
 │       └── mobile.go   # Exported API: StartTunnel, StartDirect, Stop, Ping, …
 │
 ├── relay/
-│   ├── core/           # Shared relay logic (imported by desktop and mobile)
-│   │   ├── relay.go    # RelayRequest, domain-fronted HTTP, payload encoding
-│   │   ├── proxy.go    # StartProxy, HTTP+HTTPS MITM handler
-│   │   ├── cert.go     # GenerateCA, LoadCA, CertForHost (per-host leaf certs)
-│   │   ├── direct.go   # Direct mode: Google domain detection, fragmented dial
-│   │   ├── fragment.go # TLS ClientHello fragmentation to defeat SNI inspection
-│   │   └── *_test.go
-│   ├── tunnel/
-│   │   └── *.go          # TCP-over-HTTP tunnel (Android relay path)
-│   ├── apps-script/
-│   │   └── Code.gs     # Google Apps Script relay (runs on Google's servers)
-│   ├── vps/
-│   │   └── main.go     # Exit relay binary for a self-hosted VPS
-│   └── cloudflare/
-│       └── worker.js   # Alternative exit relay as a Cloudflare Worker
+│   ├── README.md       # Package map (see relay/README.md)
+│   ├── core/           # Stable API re-export (desktop + mobile import this)
+│   ├── route/          # Direct / domestic / fragmentation routing
+│   ├── appscript/      # Domain-fronted HTTP relay + Coalescer
+│   ├── mitm/           # Local HTTP+SOCKS MITM proxy (desktop)
+│   ├── tunnel/         # TCP-over-HTTP tunnel (Android)
+│   ├── exit/           # VPS exit relay binary
+│   └── deploy/
+│       ├── apps-script/Code.gs
+│       └── cloudflare/worker.js
 │
 ├── android/            # Android Studio project
 │   └── app/src/main/java/com/zyrln/relay/
@@ -55,7 +50,7 @@ zyrln/
 ## Running Tests
 
 ```bash
-go test ./relay/core/... ./platforms/desktop/...
+go test ./relay/... ./platforms/desktop/...
 ```
 
 Or everything at once:
@@ -101,7 +96,7 @@ Probes are defined in `platforms/desktop/main.go` in the `defaultProbes()` funct
 
 ## Changing the Relay Protocol
 
-The relay payload format is defined in `relay/core/relay.go` (`buildRelayPayload`) and must match what `relay/apps-script/Code.gs` expects. If you change either side, update both.
+The relay payload format is defined in `relay/appscript/relay.go` (`buildRelayPayload`) and must match what `relay/deploy/apps-script/Code.gs` expects. If you change either side, update both.
 
 The Apps Script response format is `workerResponse` in `relay.go`:
 

@@ -3,9 +3,7 @@ package tunnel
 import (
 	"context"
 	"io"
-	"net"
 	"net/http"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -13,7 +11,6 @@ import (
 )
 
 // tunnelBundle holds the raw TCP tunnel client for Android VPN mode.
-// When direct mode is enabled, Google domains bypass the tunnel via TLS fragmentation.
 type tunnelBundle struct {
 	tunnel *TunnelClient
 }
@@ -34,6 +31,7 @@ func StopActiveTunnel() {
 }
 
 func newTunnelBundle(appScriptURLs []string, frontDomain, authKey string, client *http.Client, timeout time.Duration) (*tunnelBundle, error) {
+	core.EnsureDomesticRules()
 	pb := &tunnelBundle{}
 	if len(appScriptURLs) > 0 {
 		pb.tunnel = adoptOrCreateTunnelClient(client, appScriptURLs, frontDomain, authKey, timeout)
@@ -86,40 +84,26 @@ func handleTunnelConnect(w http.ResponseWriter, r *http.Request, pb *tunnelBundl
 	}
 	defer rawConn.Close()
 	local := &core.BufferedConn{Conn: rawConn, Reader: rw.Reader}
-
-	if pb.tunnel == nil {
-		_, _ = rawConn.Write([]byte("HTTP/1.1 502 No tunnel configured\r\n\r\n"))
-		return
-	}
 	handleRelayTunnelConnect(local, r.Host, pb)
-}
-
-func connectHost(targetHost string) string {
-	host, _, err := net.SplitHostPort(strings.TrimSpace(targetHost))
-	if err != nil {
-		return strings.TrimSpace(targetHost)
-	}
-	return host
 }
 
 func handleRelayTunnelConnect(local io.ReadWriter, targetHost string, pb *tunnelBundle) {
 	target := NormalizeHostPort(targetHost, "443")
-	host := connectHost(targetHost)
-	if core.IsDirectDomain(host) {
-		if c := asNetConn(local); c != nil {
-			core.Log("info", "direct CONNECT %s", target)
-			core.HandleDirectConnect(c, target)
+	host := core.HostFromConnectTarget(targetHost)
+
+	if c := core.ConnFromReadWriter(local); c != nil {
+		if core.ApplyBypassConnect(c, target, core.ConnectRouteForHost(host)) {
 			return
 		}
 	}
-	if core.IsGoogleDomain(host) && !core.GetDirectEnabled() {
-		core.Log("info", "tunnel CONNECT %s (direct bypass off)", target)
-	}
 	if pb.tunnel == nil {
-		if c := asNetConn(local); c != nil {
+		if c := core.ConnFromReadWriter(local); c != nil {
 			_, _ = c.Write([]byte("HTTP/1.1 502 No tunnel configured\r\n\r\n"))
 		}
 		return
+	}
+	if core.IsGoogleDomain(host) && !core.GetDirectEnabled() {
+		core.Log("info", "tunnel CONNECT %s (direct bypass off)", target)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -129,25 +113,15 @@ func handleRelayTunnelConnect(local io.ReadWriter, targetHost string, pb *tunnel
 
 	sess, err := pb.tunnel.OpenSession(ctx, target)
 	if err != nil {
-		if c := asNetConn(local); c != nil {
+		if c := core.ConnFromReadWriter(local); c != nil {
 			_, _ = c.Write([]byte("HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n"))
 		}
 		core.Log("error", "tunnel CONNECT session %s: %v", target, err)
 		return
 	}
-	if c := asNetConn(local); c != nil {
+	if c := core.ConnFromReadWriter(local); c != nil {
 		_, _ = c.Write([]byte("HTTP/1.1 200 Connection Established\r\n\r\n"))
 	}
 	core.Log("info", "tunnel CONNECT %s", target)
 	RunTunnelBridge(ctx, local, sess, target, pb.tunnel.timeout)
-}
-
-func asNetConn(local io.ReadWriter) net.Conn {
-	if c, ok := local.(net.Conn); ok {
-		return c
-	}
-	if bc, ok := local.(*core.BufferedConn); ok && bc.Conn != nil {
-		return bc
-	}
-	return nil
 }

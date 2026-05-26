@@ -78,12 +78,12 @@ func TestTunnelClient_OpenWriteReadClose(t *testing.T) {
 }
 
 func TestTunnelClient_FailoverURL(t *testing.T) {
-	var calls int
+	var calls atomic.Int32
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls++
+		calls.Add(1)
 		var env TunnelEnvelope
 		_ = json.NewDecoder(r.Body).Decode(&env)
-		if calls == 1 {
+		if calls.Load() == 1 {
 			_ = json.NewEncoder(w).Encode(TunnelResponse{Error: "Service invoked too many times for one day: urlfetch"})
 			return
 		}
@@ -99,8 +99,8 @@ func TestTunnelClient_FailoverURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	if calls < 2 {
-		t.Fatalf("expected retry, calls=%d", calls)
+	if calls.Load() < 2 {
+		t.Fatalf("expected retry, calls=%d", calls.Load())
 	}
 }
 

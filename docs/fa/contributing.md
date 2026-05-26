@@ -14,21 +14,16 @@ zyrln/
 │       └── mobile.go   # API خروجی: StartTunnel، StartDirect، Stop، Ping، …
 │
 ├── relay/
-│   ├── core/           # منطق مشترک رله (هم دسکتاپ هم اندروید استفاده می‌کنند)
-│   │   ├── relay.go    # RelayRequest، HTTP با domain-fronting، کدگذاری payload
-│   │   ├── proxy.go    # StartProxy، هندلر HTTP+HTTPS MITM
-│   │   ├── cert.go     # GenerateCA، LoadCA، CertForHost (گواهینامه موقت هر دامنه)
-│   │   ├── direct.go   # حالت مستقیم: تشخیص دامنه‌های گوگل، dial با fragmentation
-│   │   ├── fragment.go # تکه‌تکه کردن ClientHello TLS برای دور زدن SNI
-│   │   └── *_test.go
-│   ├── tunnel/
-│   │   └── *.go          # تونل TCP-over-HTTP (مسیر رله اندروید)
-│   ├── apps-script/
-│   │   └── Code.gs     # رله Google Apps Script (روی سرورهای گوگل اجرا می‌شود)
-│   ├── vps/
-│   │   └── main.go     # باینری رله خروجی برای VPS
-│   └── cloudflare/
-│       └── worker.js   # رله خروجی جایگزین به عنوان Cloudflare Worker
+│   ├── README.md       # نقشه پکیج‌ها
+│   ├── core/           # API پایدار (دسکتاپ و اندروید import می‌کنند)
+│   ├── route/          # مسیریابی: مستقیم گوگل، داخلی (.ir)، fragmentation
+│   ├── appscript/      # رله HTTP + Coalescer
+│   ├── mitm/           # پروکسی محلی MITM (دسکتاپ)
+│   ├── tunnel/         # تونل TCP-over-HTTP (اندروید)
+│   ├── exit/           # باینری رله خروجی VPS
+│   └── deploy/
+│       ├── apps-script/Code.gs
+│       └── cloudflare/worker.js
 │
 ├── android/            # پروژه Android Studio
 │   └── app/src/main/java/com/zyrln/relay/
@@ -59,7 +54,7 @@ zyrln/
 <div dir="ltr" align="left" style="direction: ltr; text-align: left;">
 
 ```bash
-go test ./relay/core/... ./platforms/desktop/...
+go test ./relay/... ./platforms/desktop/...
 ```
 
 </div>
@@ -123,7 +118,7 @@ Probe‌ها در `platforms/desktop/main.go` در تابع `defaultProbes()` ت
 
 ## تغییر پروتکل رله
 
-فرمت payload رله در `relay/core/relay.go` (تابع `buildRelayPayload`) تعریف شده و باید با انتظارات `relay/apps-script/Code.gs` مطابقت داشته باشد. اگر یک طرف را تغییر دادی، طرف دیگر را هم به‌روز کن.
+فرمت payload رله در `relay/appscript/relay.go` (تابع `buildRelayPayload`) تعریف شده و باید با انتظارات `relay/deploy/apps-script/Code.gs` مطابقت داشته باشد. اگر یک طرف را تغییر دادی، طرف دیگر را هم به‌روز کن.
 
 ## اسرار و Gitignore
 

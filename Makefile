@@ -3,7 +3,8 @@ ANDROID_HOME ?= $(HOME)/Android/Sdk
 GOTOOLCHAIN  ?= go1.25.0
 GOFLAGS      ?= -buildvcs=false
 AAR_OUT       = android/app/libs/mobile.aar
-APK_VERSION   = 1.6
+APK_VERSION   = $(shell cat VERSION)
+ANDROID_VERSION_CODE = $(shell cat VERSION_CODE)
 APK_RELEASE   = android/app/build/outputs/apk/release/zyrln-$(APK_VERSION).apk
 DESKTOP_VERSION ?= $(APK_VERSION)
 DIST_DIR      = dist
@@ -17,7 +18,7 @@ export ANDROID_HOME
 export GOTOOLCHAIN
 export GOFLAGS
 
-.PHONY: all desktop desktop-release desktop-linux desktop-windows desktop-macos desktop-macos-arm64 desktop-macos-amd64 gui proxy test android keystore clean
+.PHONY: all desktop desktop-release desktop-linux desktop-windows desktop-macos desktop-macos-arm64 desktop-macos-amd64 gui proxy test android keystore clean vps-relay-bundle
 
 all: desktop
 
@@ -69,6 +70,20 @@ proxy:
 ## Start the browser-based GUI.
 gui: desktop
 	./zyrln -gui
+
+## Build both Linux relay binaries and zip for VPS install (dist/zyrln-vps-install-VERSION.zip).
+vps-relay-bundle:
+	@rm -rf $(DIST_DIR)/.vps-bundle $(DIST_DIR)/zyrln-vps-install-$(APK_VERSION).zip
+	@mkdir -p $(DIST_DIR)/.vps-bundle
+	GOOS=linux GOARCH=amd64 GOCACHE=$(GOCACHE) go build -o $(DIST_DIR)/.vps-bundle/zyrln-relay-linux-amd64 ./relay/exit/
+	GOOS=linux GOARCH=arm64 GOCACHE=$(GOCACHE) go build -o $(DIST_DIR)/.vps-bundle/zyrln-relay-linux-arm64 ./relay/exit/
+	@cp scripts/install-vps-relay.sh scripts/vps-install/README.txt $(DIST_DIR)/.vps-bundle/
+	@chmod +x $(DIST_DIR)/.vps-bundle/install-vps-relay.sh $(DIST_DIR)/.vps-bundle/zyrln-relay-linux-amd64 $(DIST_DIR)/.vps-bundle/zyrln-relay-linux-arm64
+	@cd $(DIST_DIR)/.vps-bundle && zip -rq ../zyrln-vps-install-$(APK_VERSION).zip .
+	@cp $(DIST_DIR)/.vps-bundle/zyrln-relay-linux-amd64 $(DIST_DIR)/.vps-bundle/zyrln-relay-linux-arm64 scripts/
+	@rm -rf $(DIST_DIR)/.vps-bundle
+	@echo "VPS install zip → $(DIST_DIR)/zyrln-vps-install-$(APK_VERSION).zip"
+	@echo "Install: unzip, then ./install-vps-relay.sh user@VPS_IP"
 
 ## Smoke test the full relay chain.
 test:

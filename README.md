@@ -111,34 +111,29 @@ This is the exit node that fetches real websites. Pick one option:
 #### Option A — Cloudflare Worker (recommended, free)
 
 1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages → Create**
-2. Paste the contents of [`relay/cloudflare/worker.js`](relay/cloudflare/worker.js)
+2. Paste the contents of [`relay/deploy/cloudflare/worker.js`](relay/deploy/cloudflare/worker.js)
 3. Click **Deploy** and copy the Worker URL:
    `https://your-worker.your-subdomain.workers.dev`
 
 #### Option B — VPS
 
-See **[docs/vps-setup.md](docs/vps-setup.md)** for full instructions.
+Linux VPS (amd64 or arm64), public IP, port **8787** open, SSH as `user@host` with `sudo`. On your laptop you only need `ssh`/`scp` (no Go).
 
-Short version — on your VPS:
-```bash
-# Build locally and copy to server
-GOOS=linux GOARCH=amd64 go build -o zyrln-relay ./relay/vps/main.go
-scp zyrln-relay root@YOUR_VPS:/usr/local/bin/
+1. Download **`zyrln-vps-install-VERSION.zip`** from [Releases](../../releases) and unzip it (`make vps-relay-bundle` to build the zip).
+2. In the unzipped folder, run `./install-vps-relay.sh user@YOUR_VPS_IP` (e.g. `ubuntu@1.2.3.4`).  
+   Optional shared secret: `ZYRLN_RELAY_KEY=secret` or `ZYRLN_RELAY_KEY=auto` before the command — use the same value for `EXIT_RELAY_KEY` in Apps Script.
+3. In `Code.gs`: `EXIT_RELAY_URL = "http://YOUR_VPS_IP:8787/relay"` and `EXIT_RELAY_KEY` if you set one.
 
-# On the server — create /etc/zyrln-relay.env:
-ZYRLN_RELAY_LISTEN=0.0.0.0:8787
-ZYRLN_RELAY_KEY=
+Check: `curl -s http://YOUR_VPS_IP:8787/healthz` should print `ok`.
 
-# Then enable and start as a systemd service (see docs/vps-setup.md)
-ufw allow 8787/tcp
-```
+From a git clone: `make vps-relay-bundle`, then `./scripts/install-vps-relay.sh user@YOUR_VPS_IP`.
 
 ### Step 3 — Deploy the Apps Script relay
 
 This is the front door. It sits on Google's servers and receives your traffic.
 
 1. Go to [script.google.com](https://script.google.com) → **New project**
-2. Delete the default code and paste the contents of [`relay/apps-script/Code.gs`](relay/apps-script/Code.gs)
+2. Delete the default code and paste the contents of [`relay/deploy/apps-script/Code.gs`](relay/deploy/apps-script/Code.gs)
 3. Edit the three lines at the top:
 
 ```js

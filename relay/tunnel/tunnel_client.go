@@ -235,7 +235,7 @@ func (c *TunnelClient) pingAppsScriptLight(ctx context.Context) error {
 		return err
 	}
 	pingTimeout := c.pingTimeout()
-	idx := int(core.ActiveURLIdx.Load()) % len(c.appScriptURLs)
+	idx := int(core.ActiveURLIdxLoad()) % len(c.appScriptURLs)
 	if idx < 0 {
 		idx = 0
 	}
@@ -259,7 +259,7 @@ func (c *TunnelClient) pingAppsScriptLight(ctx context.Context) error {
 func (c *TunnelClient) pingAppsScriptLegacy(ctx context.Context) error {
 	payload := core.BuildRelayPayload(c.authKey, "HEAD", "https://www.gstatic.com/generate_204", map[string]string{}, nil)
 	pingTimeout := c.pingTimeout()
-	idx := int(core.ActiveURLIdx.Load()) % len(c.appScriptURLs)
+	idx := int(core.ActiveURLIdxLoad()) % len(c.appScriptURLs)
 	if idx < 0 {
 		idx = 0
 	}
@@ -276,7 +276,7 @@ func (c *TunnelClient) warmupTunnelBatched(ctx context.Context) {
 		{Op: TunnelOpOpen, ID: id, Target: "1.1.1.1:443"},
 		{Op: TunnelOpClose, ID: id},
 	}
-	idx := int(core.ActiveURLIdx.Load()) % len(c.appScriptURLs)
+	idx := int(core.ActiveURLIdxLoad()) % len(c.appScriptURLs)
 	if idx < 0 {
 		idx = 0
 	}
@@ -373,7 +373,7 @@ func (c *TunnelClient) NewSession(target string) (*TunnelSession, error) {
 	n := len(c.appScriptURLs)
 	idx := 0
 	if n > 0 {
-		idx = int(core.ActiveURLIdx.Load()) % n
+		idx = int(core.ActiveURLIdxLoad()) % n
 		if idx < 0 {
 			idx = 0
 		}
@@ -412,7 +412,7 @@ func (c *TunnelClient) openSession(ctx context.Context, s *TunnelSession, target
 		_, err := c.tryTunnelURL(ctx, idx, req)
 		if err == nil {
 			s.urlIdx = idx
-			core.ActiveURLIdx.Store(int64(idx))
+			core.ActiveURLIdxStore(int64(idx))
 			return nil
 		}
 		lastErr = err
@@ -677,7 +677,7 @@ func (c *TunnelClient) roundTripPinned(ctx context.Context, startIdx int, req Tu
 			return TunnelResponse{}, lastErr
 		}
 		if idx != start {
-			core.ActiveURLIdx.Store(int64(idx))
+			core.ActiveURLIdxStore(int64(idx))
 		}
 		onPin(idx)
 		return resp, nil
@@ -743,7 +743,7 @@ func (c *TunnelClient) roundTripPayloadPinned(ctx context.Context, startIdx int,
 			return nil, bodyErr
 		}
 		if idx != start {
-			core.ActiveURLIdx.Store(int64(idx))
+			core.ActiveURLIdxStore(int64(idx))
 		}
 		onPin(idx)
 		return raw, nil
@@ -760,11 +760,4 @@ func newTunnelSessionID() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b[:]), nil
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

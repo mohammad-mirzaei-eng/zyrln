@@ -29,7 +29,9 @@ import (
 )
 
 const defaultProxyAddress = "direct"
-const appVersion = "1.6"
+
+// appVersion must match VERSION at repo root (Go embed cannot reference parent dirs).
+const appVersion = "2.0-pre-1"
 
 //go:embed gui/*
 var embeddedGUI embed.FS
@@ -904,7 +906,6 @@ type guiLogEntry struct {
 var (
 	guiProxyServer    *http.Server
 	guiProxyLn        net.Listener
-	guiSOCKSServer    *core.SOCKSServer
 	guiSOCKSLn        net.Listener
 	guiCoalescer      *core.Coalescer
 	guiRequestCount   int64
@@ -948,9 +949,9 @@ func startGUIServer(listenAddr, configPath, caCertPath, caKeyPath string) {
 		openBrowser("http://" + listenAddr)
 	}()
 
-	core.OnRequest = func(method, url string) {
+	core.SetOnRequest(func(method, url string) {
 		atomic.AddInt64(&guiRequestCount, 1)
-	}
+	})
 	core.SetLogFunc(func(level, msg string) {
 		guiEmitLog(level, msg)
 	})
@@ -1132,7 +1133,6 @@ func newGUIHandler(configPath, caCertPath, caKeyPath string, startProxy guiProxy
 			}
 			guiProxyServer = nil
 			guiProxyLn = nil
-			guiSOCKSServer = nil
 			guiSOCKSLn = nil
 			guiProxyStartTime = time.Time{}
 		}
@@ -1207,7 +1207,7 @@ func newGUIHandler(configPath, caCertPath, caKeyPath string, startProxy guiProxy
 			}
 		}
 
-		srv, ln, socksSrv, socksLn, err := startProxy(listen, socksListen, urls, key, ca)
+		srv, ln, _, socksLn, err := startProxy(listen, socksListen, urls, key, ca)
 		if err != nil {
 			http.Error(w, "start failed: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -1220,7 +1220,6 @@ func newGUIHandler(configPath, caCertPath, caKeyPath string, startProxy guiProxy
 
 		guiProxyServer = srv
 		guiProxyLn = ln
-		guiSOCKSServer = socksSrv
 		guiSOCKSLn = socksLn
 		guiProxyStartTime = time.Now()
 		w.WriteHeader(http.StatusOK)
@@ -1244,7 +1243,6 @@ func newGUIHandler(configPath, caCertPath, caKeyPath string, startProxy guiProxy
 		}
 		guiProxyServer = nil
 		guiProxyLn = nil
-		guiSOCKSServer = nil
 		guiSOCKSLn = nil
 		guiProxyStartTime = time.Time{}
 		guiMu.Unlock()

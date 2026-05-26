@@ -122,38 +122,28 @@
 #### گزینه الف — Cloudflare Worker (پیشنهادی، رایگان)
 
 1. به [dash.cloudflare.com](https://dash.cloudflare.com) برو → **Workers & Pages → Create**
-2. محتوای فایل [`relay/cloudflare/worker.js`](relay/cloudflare/worker.js) را جای‌گذاری کن
+2. محتوای فایل [`relay/deploy/cloudflare/worker.js`](relay/deploy/cloudflare/worker.js) را جای‌گذاری کن
 3. روی **Deploy** کلیک کن و آدرس Worker را کپی کن:
    `https://worker-name.subdomain.workers.dev`
 
 #### گزینه ب — VPS
 
-راهنمای کامل: **[docs/fa/vps-setup.md](docs/fa/vps-setup.md)**
+VPS لینوکس (amd64 یا arm64)، IP عمومی، پورت **۸۷۸۷** باز، SSH با `user@host` و `sudo`. روی لپ‌تاپ فقط `ssh`/`scp` (بدون Go).
 
-خلاصه — روی VPS:
+1. **`zyrln-vps-install-VERSION.zip`** را از [Releases](../../releases) بگیر و از حالت فشرده خارج کن (`make vps-relay-bundle` برای ساخت zip).
+2. در همان پوشه: `./install-vps-relay.sh user@IP_VPS` — اختیاری: `ZYRLN_RELAY_KEY=secret` یا `auto` (همان `EXIT_RELAY_KEY` در Apps Script).
+3. در `Code.gs`: `EXIT_RELAY_URL = "http://IP_VPS:8787/relay"` و در صورت نیاز `EXIT_RELAY_KEY`.
 
-<div dir="ltr" align="left" style="direction: ltr; text-align: left;">
+تست: `curl -s http://IP_VPS:8787/healthz` باید `ok` چاپ کند.
 
-```bash
-# بیلد و کپی روی سرور
-GOOS=linux GOARCH=amd64 go build -o zyrln-relay ./relay/vps/main.go
-scp zyrln-relay root@IP_VPS:/usr/local/bin/
-
-# فایل /etc/zyrln-relay.env بساز:
-ZYRLN_RELAY_LISTEN=0.0.0.0:8787
-ZYRLN_RELAY_KEY=
-
-ufw allow 8787/tcp
-```
-
-</div>
+از مخزن: `make vps-relay-bundle`، بعد `./scripts/install-vps-relay.sh user@IP_VPS`.
 
 ### مرحله ۳ — راه‌اندازی Apps Script
 
 این درب ورودی است. روی سرورهای گوگل اجرا می‌شود و ترافیک تو را دریافت می‌کند.
 
 1. به [script.google.com](https://script.google.com) برو → **پروژه جدید**
-2. کد پیش‌فرض را پاک کن و محتوای فایل [`relay/apps-script/Code.gs`](relay/apps-script/Code.gs) را جای‌گذاری کن
+2. کد پیش‌فرض را پاک کن و محتوای فایل [`relay/deploy/apps-script/Code.gs`](relay/deploy/apps-script/Code.gs) را جای‌گذاری کن
 3. سه خط اول را ویرایش کن:
 
 <div dir="ltr" align="left" style="direction: ltr; text-align: left;">

@@ -9,6 +9,10 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+def repoRoot = rootProject.file("..")
+def appVersionName = repoRoot.toPath().resolve("VERSION").toFile().text.trim()
+def appVersionCode = repoRoot.toPath().resolve("VERSION_CODE").toFile().text.trim() as int
+
 android {
     namespace 'com.zyrln.relay'
     compileSdk 34
@@ -17,8 +21,8 @@ android {
         applicationId "com.zyrln.relay"
         minSdk 29
         targetSdk 34
-        versionCode 15
-        versionName "1.6"
+        versionCode appVersionCode
+        versionName appVersionName
         ndk {
             abiFilters "arm64-v8a", "armeabi-v7a"
         }

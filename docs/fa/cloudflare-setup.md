@@ -6,14 +6,14 @@
 
 1. به [dash.cloudflare.com](https://dash.cloudflare.com) برو
 2. **Workers & Pages → Create application → Worker**
-3. کد پیش‌فرض را پاک کن و محتوای [`relay/cloudflare/worker.js`](../../relay/cloudflare/worker.js) را جایگذاری کن
+3. کد پیش‌فرض را پاک کن و محتوای [`relay/deploy/cloudflare/worker.js`](../../relay/deploy/cloudflare/worker.js) را جایگذاری کن
 4. روی **Deploy** کلیک کن
 5. آدرس Worker را کپی کن:
    `https://worker-name.subdomain.workers.dev`
 
 ## به‌روزرسانی Apps Script
 
-در `relay/apps-script/Code.gs` مقدار `EXIT_RELAY_URL` را به آدرس Worker تنظیم کن:
+در `relay/deploy/apps-script/Code.gs` مقدار `EXIT_RELAY_URL` را به آدرس Worker تنظیم کن:
 
 <div dir="ltr" align="left" style="direction: ltr; text-align: left;">
 

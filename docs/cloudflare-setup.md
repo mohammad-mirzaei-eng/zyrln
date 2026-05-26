@@ -6,14 +6,14 @@ An alternative to running your own VPS. The free tier handles personal use easil
 
 1. Go to [dash.cloudflare.com](https://dash.cloudflare.com)
 2. **Workers & Pages → Create application → Worker**
-3. Replace the default code with the contents of [`relay/cloudflare/worker.js`](../relay/cloudflare/worker.js)
+3. Replace the default code with the contents of [`relay/deploy/cloudflare/worker.js`](../relay/deploy/cloudflare/worker.js)
 4. Click **Deploy**
 5. Copy the Worker URL:
    `https://your-worker.your-subdomain.workers.dev`
 
 ## Update Apps Script
 
-In `relay/apps-script/Code.gs`, set `EXIT_RELAY_URL` to your Worker URL:
+In `relay/deploy/apps-script/Code.gs`, set `EXIT_RELAY_URL` to your Worker URL:
 
 ```js
 const EXIT_RELAY_URL = "https://your-worker.your-subdomain.workers.dev/relay";

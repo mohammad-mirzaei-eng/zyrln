@@ -941,7 +941,6 @@ func resetGUIStateForTest(t *testing.T) {
 	}
 	guiProxyServer = nil
 	guiProxyLn = nil
-	guiSOCKSServer = nil
 	guiSOCKSLn = nil
 	guiProxyStartTime = time.Time{}
 	guiMu.Unlock()
